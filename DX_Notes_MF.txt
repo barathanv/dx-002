@@ -1,0 +1,115 @@
+﻿Objective: Pull Salesforce Package to Local directory, Convert Metadata to Source files to use as source for DX driven development and deployment.
+
+
+sfdx force:project:create -n MutualFundExplorer
+
+cd MutualFundExplorer
+
+sfdx force:org:create -f config/project-scratch-def.json -a TempUnmanaged username=barathanv_dx_002@gmail.com
+
+
+sfdx force:org:display -u TempUnmanaged
+=== Org Description
+KEY              VALUE
+───────────────  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Access Token     00DJ0000003Qdz0!ARIAQEB8ZZ7bfcrfSUz2NXU62kSju348wFdz.ryhCPbYQFP88DrEmBKZuuVRsPyeVYaUTspX9AaIiie3oPKc0Yy.bO0pWyar
+Alias            TempUnmanaged
+Client Id        SalesforceDevelopmentExperience
+Created By       barathanv@31demo.com
+Created Date     2018-11-02T17:58:08.000+0000
+Dev Hub Id       barathanv@31demo.com
+Edition          Developer
+Expiration Date  2018-11-09
+Id               00DJ0000003Qdz0MAC
+Instance Url     https://page-data-646-dev-ed.cs10.my.salesforce.com
+Org Name         Demo Company
+Status           Active
+Username         barathanv_dx_002@gmail.com
+
+sfdx force:user:password:generate -u TempUnmanaged
+
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:user:display -u barathanv_dx_002@gmail.com
+=== User Description
+KEY           VALUE
+────────────  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Access Token  00DJ0000003Qdz0!ARIAQEB8ZZ7bfcrfSUz2NXU62kSju348wFdz.ryhCPbYQFP88DrEmBKZuuVRsPyeVYaUTspX9AaIiie3oPKc0Yy.bO0pWyar
+Alias         TempUnmanaged
+Id            005J0000006vOdbIAE
+Instance Url  https://page-data-646-dev-ed.cs10.my.salesforce.com
+Login Url     https://CS10.salesforce.com
+Org Id        00DJ0000003Qdz0MAC
+Password      7R4hi@hqD6
+Profile Name  System Administrator
+Username      barathanv_dx_002@gmail.com
+
+Install package https://login.salesforce.com/packaging/installPackage.apexp?p0=04t46000001DnYm
+create permission set
+
+sfdx force:source:pull -u TempUnmanaged
+
+sfdx force:mdapi:retrieve -s -r ./mdapipackage -p DreamInvest -u TempUnmanaged -w 10
+
+cd mdapipackage
+
+unzip unpackaged.zip -d .
+del/rm unpackaged.zip
+=========================================================
+
+Convert contents of package to source format
+cd..
+sfdx force:mdapi:convert -r mdapipackage/
+del mdapipackage (rm -rf mdapipackage)
+
+---------------------------
+new scratch org : pusing code to new scratch org
+sfdx force:org:create -s -f config/project-scratch-def.json username=barathanv_dx002-1@gmail.com
+
+sfdx force:source:push
+sfdx force:user:permset:assign -n DreamInvest 
+sfdx force:org:open
+
+==================================
+
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:org:delete -u barathanv_dx002-1@gmail.com
+Enqueue scratch org with name: barathanv_dx002-1@gmail.com for deletion?  Are you sure (y/n)?: Y
+Successfully marked scratch org barathanv_dx002-1@gmail.com for deletion
+
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:org:create -s -f config/project-scratch-def.json username=barathanv_dx002-1@gmail.com -a DreamInvest-Verify
+ERROR:  The username provided to the org:create command is unavailable. sfdx-project.json.
+
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:org:create -s -f config/project-scratch-def.json username=barathanv_dx002-2@gmail.com -a DreamInvest-Verify
+Successfully created scratch org: 00D5B00000012sWUAQ, username: barathanv_dx002-2@gmail.com
+
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:user:password:generate -u barathanv_dx002-2@gmail.com
+Successfully set the password "y]6q5810iV" for user barathanv_dx002-2@gmail.com.
+You can see the password again by running "sfdx force:user:display -u barathanv_dx002-2@gmail.com".
+
+sfdx force:source:push
+
+sfdx force:user:permset:assign -n DreamInvest
+
+sfdx force:org:open
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:org:open -u barathanv_dx002-2@gmail.com
+Access org 00D5B00000012sWUAQ as user barathanv_dx002-2@gmail.com with the following URL: https://nosoftware-connect-9675-dev-ed.cs52.my.salesforce.com/secur/frontdoor.jsp?sid=00D5B00000012sW!ARMAQIgyN9rBMTnVFaW3UK0cHnQVxdk.Mi6oRwpmqaV4BkKhU76fa1aodJeqyniwuSBWgy5slBC6OQbM5_STzPFX_ynsoenw
+
+==================================
+
+Deploy to Trailhead Playground:BEGIN
+
+C:\Barath\Work\Training\DX\th-dx\MutualFundExplorer>sfdx force:auth:web:login -a MyTP1
+Successfully authorized barathanv@cunning-shark-szapa4.com with org ID 00D5A000000x01RUAQ
+You may now close the browser
+
+sfdx force:org:list
+
+Convert Source to Metadata Format and Deploy: BEGIN
+------------------
+mkdir mdapioutput
+sfdx force:source:convert -d mdapioutput/
+sfdx force:mdapi:deploy -d mdapioutput/ -u MyTP1 -w 100
+sfdx force:user:permset:assign -n DreamInvest -u MyTP1
+sfdx force:org:open -u MyTP1
+-----------------
+Convert Source to Metadata Format and Deploy: END
+======================================
+Deploy to Trailhead Playground: END
